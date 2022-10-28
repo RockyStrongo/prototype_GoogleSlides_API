@@ -11,7 +11,7 @@
 <body>
   <div id="app"></div>
   <button onclick="signin()">se connecter avec Google</button>
-  <button onclick="getthisPresentationAPI()"> test </button>
+  <!-- <button onclick="getthisPresentationAPI()"> test </button> -->
 
   <br><br>
   <input type="text" id="title" placeholder="titre de la prez" />
@@ -21,14 +21,16 @@
   <br><br>
   <input type="text" id="titre" placeholder="titre de la slide" />
   <button onclick="insertTextPresentationAPI()"> Insérer titre </button>
+  <p id='slideUpdated'></p>
 
   <script type="module" src="/src/main.js"></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" onload="console.log('TODO: add onload function')">  </script>
-  <script>
+  <script src="API_KEYS.js"></script>
 
+  <script>
     const client = google.accounts.oauth2.initCodeClient({
-      client_id: '701546085277-t9fi4hfsn19emb1kddj5rfpk9sldnf4k.apps.googleusercontent.com',
+      client_id: API_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/drive',
       ux_mode: 'redirect',
       redirect_uri: "http://localhost:5173",
@@ -162,6 +164,7 @@
         method: "POST"
       }).then(function (response) {
         if (response.ok) {
+          document.getElementById('slideUpdated').innerText = "Slide crée avec success"
           return response.json()
         } else {
           console.log("error")
