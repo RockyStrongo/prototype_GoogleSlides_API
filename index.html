@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vite App</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <button onclick="signin()">se connecter avec Google</button>
+  <button onclick="getthisPresentationAPI()"> test </button>
+
+  <br><br>
+  <input type="text" id="title" placeholder="titre de la prez" />
+  <button onclick="createPresentationAPI()"> Créer une présentation avec ce titre </button>
+  <p id='presentationcreated'></p>
+
+  <br><br>
+  <input type="text" id="titre" placeholder="titre de la slide" />
+  <button onclick="insertTextPresentationAPI()"> Insérer titre </button>
+
+  <script type="module" src="/src/main.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" onload="console.log('TODO: add onload function')">  </script>
+  <script>
+
+    const client = google.accounts.oauth2.initCodeClient({
+      client_id: '701546085277-t9fi4hfsn19emb1kddj5rfpk9sldnf4k.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/drive',
+      ux_mode: 'redirect',
+      redirect_uri: "http://localhost:5173",
+      state: "ABC"
+    });
+
+    let presentationIDcreated = String;
+    let token = String;
+
+    async function signin() {
+      client.requestCode()
+    }
+
+    function getauthcode() {
+      const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+      });
+      return params.code
+    }
+
+    async function gettoken() {
+      let authcode = getauthcode()
+
+      const rawResponse = await fetch('https://oauth2.googleapis.com/token?code=' + authcode + '&grant_type=authorization_code&client_id=701546085277-t9fi4hfsn19emb1kddj5rfpk9sldnf4k.apps.googleusercontent.com&client_secret=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&redirect_uri=http://localhost:5173', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: JSON.stringify({ a: 1, b: 'Textual content' })
+      });
+      const content = await rawResponse.json();
+
+      token = content.access_token;
+
+    }
+
+    async function getPresentationAPI() {
+
+      await gettoken()
+
+      const response = await fetch("https://slides.googleapis.com/v1/presentations/10FOy3ptBCJKguuoKFMD8IW0VlxS9yJFsbYJrSLtqc18", {
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token
+        }
+      }).then(function (response) {
+        if (response.ok) {
+          return response.json()
+        } else {
+          console.log("error")
+        }
+      })
+      console.log(response)
+    }
+
+    async function createPresentationAPI() {
+
+      await gettoken()
+
+      let title = document.getElementById('title').value
+
+      let body =
+      {
+        "title": title,
+      }
+
+      let jsonbody = JSON.stringify(body)
+
+      const response = await fetch("https://slides.googleapis.com/v1/presentations", {
+        body: jsonbody,
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        method: "POST"
+      }).then(function (response) {
+        if (response.ok) {
+          return response.json()
+        } else {
+          console.log("error")
+        }
+      })
+      console.log(response)
+
+      presentationIDcreated = response.presentationId
+      document.getElementById('presentationcreated').innerText = "Présentation créée : https://docs.google.com/presentation/d/" + presentationIDcreated
+    }
+
+    async function insertTextPresentationAPI() {
+
+      let titreInput = document.getElementById('titre').value
+
+      let requestbody = {
+        "requests": [
+          {
+            "createSlide": {
+              "objectId": "myREX",
+              "slideLayoutReference": {
+                "predefinedLayout": "TITLE_AND_TWO_COLUMNS"
+              },
+              "placeholderIdMappings": [
+                {
+                  "layoutPlaceholder": {
+                    "type": "TITLE",
+                    "index": 0
+                  },
+                  "objectId": "montitre",
+                }
+              ],
+            }
+          },
+          {
+            "insertText": {
+              "objectId": "montitre",
+              "text": titreInput, 
+            }
+          },
+        ]
+      }
+
+      let jsonbody = JSON.stringify(requestbody)
+
+      const response = await fetch("https://slides.googleapis.com/v1/presentations/" + presentationIDcreated + ":batchUpdate", {
+        body: jsonbody,
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        method: "POST"
+      }).then(function (response) {
+        if (response.ok) {
+          return response.json()
+        } else {
+          console.log("error")
+        }
+      })
+      console.log(response)
+
+
+    }
+
+
+    async function getthisPresentationAPI() {
+
+      await gettoken()
+
+      const response = await fetch("https://slides.googleapis.com/v1/presentations/1TA529O0elJmSLHRfFh7qYRCCnHG9a3r0LCxA65e2ilA", {
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token
+        }
+      }).then(function (response) {
+        if (response.ok) {
+          return response.json()
+        } else {
+          console.log("error")
+        }
+      })
+      console.log(response)
+    }
+
+
+  </script>
+</body>
+
+</html>
